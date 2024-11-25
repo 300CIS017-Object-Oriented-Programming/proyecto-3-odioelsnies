@@ -16,3 +16,4 @@ class GestorXlsx:
             print(f"Archivo .xlsx creado exitosamente en {ruta}")
         except Exception as e:
             print(f"Error al crear el archivo .xlsx: {e}")
+            
