@@ -2,26 +2,23 @@ import os
 from SNIEScontroller import SNIESController
 
 def main():
-    # Verificar el directorio actual
+    
     print("Directorio actual:", os.getcwd())
     print("Archivos en el directorio actual:", os.listdir())
-
-    # Ruta a la carpeta "inputs"
+    
     carpeta_inputs = "inputs"
 
-    # Instanciar el controlador
     controlador = SNIESController(carpeta_inputs)
 
-    # Pedir una palabra clave al usuario
     palabra_clave = input("Ingresa la palabra clave para buscar: ")
 
     try:
         resultados = controlador.buscarPorPalabra(palabra_clave)
-        # Mostrar los resultados
+        
         if resultados:
             print(f"Se encontraron {len(resultados)} resultados:")
             for fila in resultados:
-                print(f"- {fila}")  # Imprime la fila completa
+                print(f"- {fila}")  
         else:
             print("No se encontraron resultados para la palabra clave ingresada.")
     except FileNotFoundError:

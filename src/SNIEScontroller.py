@@ -1,18 +1,13 @@
 import os
 import csv
-from ProgramasAcademico import ProgramaAcademico
 
 class SNIESController:
     def __init__(self, carpeta_inputs):
         self.carpeta_inputs = carpeta_inputs
-        self.programas_academicos = []
 
     def buscarPorPalabra(self, palabra_clave):
-        """
-        Busca la palabra clave en todas las columnas de todos los archivos CSV dentro de la carpeta `inputs`.
-        """
-        resultados = []
-        archivos_procesados = []
+        
+        resultados = {}
 
         # Verificar si la carpeta existe
         if not os.path.exists(self.carpeta_inputs):
@@ -22,30 +17,29 @@ class SNIESController:
         for archivo in os.listdir(self.carpeta_inputs):
             ruta_archivo = os.path.join(self.carpeta_inputs, archivo)
             if archivo.endswith(".csv"):
-                archivos_procesados.append(archivo)
-                print(f"Buscando en: {archivo}")
+                print(f"Procesando archivo: {archivo}")
 
                 # Leer el archivo CSV
                 with open(ruta_archivo, mode='r', encoding='utf-8') as file:
                     reader = csv.DictReader(file, delimiter=';')
                     
-                    # Limpiar los encabezados
+                    # Limpiar encabezados
                     reader.fieldnames = [header.strip() for header in reader.fieldnames]
-                    print(f"Encabezados limpiados: {reader.fieldnames}")  # Debug
+                    print(f"Encabezados: {reader.fieldnames}")
 
-                    # Buscar la palabra clave en todas las filas y columnas
+                    # Obtener el nombre de la última columna
+                    ultima_columna = reader.fieldnames[-1]
+
+                    # Buscar la palabra clave en las filas
                     for row in reader:
                         row = {k.strip(): v for k, v in row.items()}  # Limpiar claves
                         for columna, valor in row.items():
                             if palabra_clave.lower() in valor.lower():
-                                # Crear un objeto ProgramaAcademico o capturar la fila encontrada
-                                resultados.append(row)
-                                break  # No seguir revisando otras columnas de la misma fila
-        if not archivos_procesados:
-            print("No se encontraron archivos CSV en la carpeta proporcionada.")
+                                # Agregar la fila al grupo correspondiente a la última columna
+                                if ultima_columna not in resultados:
+                                    resultados[ultima_columna] = []
+                                resultados[ultima_columna].append(row)
+                                break  # Salir después de encontrar la palabra clave en esta fila
         return resultados
-
-
-
 
 

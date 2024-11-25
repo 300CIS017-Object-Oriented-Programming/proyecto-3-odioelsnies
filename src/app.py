@@ -1,3 +1,6 @@
+import os
+import re
+import pandas as pd
 import streamlit as st
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 from SNIEScontroller import SNIESController
@@ -5,33 +8,103 @@ from SNIEScontroller import SNIESController
 # Ruta de la carpeta con los CSVs
 carpeta_inputs = "inputs"
 
-# Crear instancia del controlador
 controller = SNIESController(carpeta_inputs)
 
-st.title("Búsqueda de Programas SNIES con Selección")
+st.sidebar.title("Menú")
+opcion = st.sidebar.radio(
+    "Seleccione una opción:",
+    ["Página de bienvenida", "Procesar datos por rango", "Procesar datos por palabra clave"]
+)
 
-palabra_clave = st.text_input("Ingresa una palabra clave para buscar en los programas académicos")
+if opcion == "Página de bienvenida":
+    st.title("Bienvenido al Sistema de Procesamiento de Datos SNIES")
+    st.write("Seleccione una opción del menú para continuar:")
+    st.write("- **Procesar datos por rango**: Analiza datos según un rango definido.")
+    st.write("- **Procesar datos por palabra clave**: Busca y procesa datos según una palabra clave.")
 
-if st.button("Buscar"):
-    resultados = controller.buscarPorPalabra(palabra_clave)
-    if resultados:
-        # Configurar opciones de la tabla
-        gb = GridOptionsBuilder.from_dataframe(resultados)
-        gb.configure_selection(selection_mode="multiple", use_checkbox=True)
-        gb.configure_column("checkbox", headerCheckboxSelection=True)  # Selección general
-        grid_options = gb.build()
+elif opcion == "Procesar datos por rango":
+    st.title("Procesar Datos por Rango")
 
-        # Mostrar tabla con selección
-        grid_response = AgGrid(
-            resultados,
-            gridOptions=grid_options,
-            update_mode=GridUpdateMode.SELECTION_CHANGED,
-            height=400,
-            theme="streamlit"
-        )
+    anio_inicial = st.number_input("Año inicial", min_value=1900, max_value=2100, step=1, value=2020)
+    anio_final = st.number_input("Año final", min_value=1900, max_value=2100, step=1, value=2023)
 
-        # Recuperar filas seleccionadas
-        seleccionados = grid_response["selected_rows"]
-        st.write("Filas seleccionadas:", seleccionados)
-    else:
-        st.write("No se encontraron resultados para la palabra clave ingresada.")
+    if st.button("Procesar Datos"):
+      
+        if anio_inicial > anio_final:
+            st.error("El año inicial no puede ser mayor al año final.")
+        else:
+            archivos_validos = []
+            for archivo in os.listdir(carpeta_inputs):
+                match = re.search(r'\d{4}', archivo)
+                if match:
+                    anio = int(match.group())
+                    if anio_inicial <= anio <= anio_final:
+                        archivos_validos.append(os.path.join(carpeta_inputs, archivo))
+
+            if not archivos_validos:
+                st.warning("No se encontraron archivos para el rango de años especificado.")
+            else:
+                st.write(f"Archivos encontrados: {', '.join([os.path.basename(a) for a in archivos_validos])}")
+
+                tabla_consolidada = pd.DataFrame()
+                for archivo in archivos_validos:
+                    df = pd.read_csv(archivo, delimiter=';', encoding='utf-8')
+
+                    anio = int(re.search(r'\d{4}', archivo).group())
+                    df['Año'] = anio 
+
+                    tabla_consolidada = pd.concat([tabla_consolidada, df], ignore_index=True)
+
+                tabla_consolidada['Estudiantes inscritos'] = tabla_consolidada['1-Inscrito']
+                tabla_consolidada['Estudiantes admitidos'] = tabla_consolidada['2-Admitido']
+                tabla_consolidada['Estudiantes matriculados por primera vez'] = tabla_consolidada['3-Neos']
+                tabla_consolidada['Total de estudiantes matriculados'] = tabla_consolidada['4-Matriculado']
+
+                st.subheader("Tabla Consolidada")
+                gb = GridOptionsBuilder.from_dataframe(tabla_consolidada)
+                gb.configure_pagination()
+                grid_options = gb.build()
+
+                AgGrid(
+                    tabla_consolidada,
+                    gridOptions=grid_options,
+                    update_mode=GridUpdateMode.NO_UPDATE,
+                    height=500,
+                    theme="streamlit"
+                )
+
+elif opcion == "Procesar datos por palabra clave":
+    
+    st.title("Procesar Datos por Palabra Clave")
+    palabra_clave = st.text_input("Ingresa una palabra clave para buscar en los programas académicos")
+
+    if st.button("Buscar"):
+        resultados = controller.buscarPorPalabra(palabra_clave)
+
+        if resultados:
+            tablas_por_ultima_columna = {}
+            for ultima_columna, filas in resultados.items():
+                tabla = pd.DataFrame(filas)
+                st.subheader(f"Tabla para: {ultima_columna}")
+
+                gb = GridOptionsBuilder.from_dataframe(tabla)
+                gb.configure_selection(selection_mode="multiple", use_checkbox=True)
+                grid_options = gb.build()
+
+                grid_response = AgGrid(
+                    tabla,
+                    gridOptions=grid_options,
+                    update_mode=GridUpdateMode.SELECTION_CHANGED,
+                    height=300,
+                    theme="streamlit"
+                )
+
+                seleccionados_por_tabla = {}
+                seleccionados_por_tabla[ultima_columna] = grid_response["selected_rows"]
+
+            if st.button("Generar Análisis"):
+                for ultima_columna, seleccionados in seleccionados_por_tabla.items():
+                    if seleccionados:
+                        seleccionados_df = pd.DataFrame(seleccionados)
+                        st.subheader(f"Análisis para: {ultima_columna}")
+                        st.bar_chart(seleccionados_df[ultima_columna])
