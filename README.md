@@ -30,6 +30,51 @@
 | Exportación de resultados    | Exportación a JSON y gráficos descargables.      | 🔄 Incompleto |
 | Modularidad del código       | Separación en funciones y módulos.              | ✅ Completado |
 
-![Procesar Datos por Palabra Clave](https://ibb.co/y5pc33j "Procesar Datos por Palabra Clave")
+classDiagram
+    class SNIESController {
+        - carpeta_inputs : str
+        - programas_academicos : list
+        + __init__(carpeta_inputs)
+        + buscarPorPalabra(palabra_clave) : list
+    }
 
-![Procesar Datos por Rango](https://ibb.co/pZXmN5h "Procesar Datos por Rango")
+    class ProgramasAcademico {
+        + __init__()
+        + metodoEjemplo()
+    }
+
+    class GestorCsv {
+        + __init__()
+        + leer_csv()
+    }
+
+    class GestorJson {
+        + __init__()
+        + leer_json()
+    }
+
+    class GestorXlsx {
+        + __init__()
+        + leer_xlsx()
+    }
+
+    class Consolidado {
+        + __init__()
+        + generarConsolidado()
+    }
+
+    class View {
+        + __init__()
+        + pantalla_bienvenido()
+        + visualizacion_datos_extra()
+        + buscar_por_palabra_clave_y_formacion()
+        + salir()
+        + is_convertible_to_int(value) : bool
+    }
+
+    %% Relationships
+    SNIESController --> ProgramasAcademico : "Uses"
+    View --> SNIESController : "Interacts with"
+    Consolidado --> GestorCsv : "Uses"
+    Consolidado --> GestorJson : "Uses"
+    Consolidado --> GestorXlsx : "Uses"
