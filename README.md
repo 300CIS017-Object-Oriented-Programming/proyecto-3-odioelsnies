@@ -29,3 +29,7 @@
 | Visualizaciones interactivas | Gráficos de barras, tablas dinámicas.           | 🔄 Incompleto |
 | Exportación de resultados    | Exportación a JSON y gráficos descargables.      | 🔄 Incompleto |
 | Modularidad del código       | Separación en funciones y módulos.              | ✅ Completado |
+
+![Procesar Datos por Palabra Clave](https://ibb.co/y5pc33j "Procesar Datos por Palabra Clave")
+
+![Procesar Datos por Rango](https://ibb.co/pZXmN5h "Procesar Datos por Rango")
